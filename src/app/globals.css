@@ -198,6 +198,10 @@ h1 {
   padding: 18px;
 }
 
+.toolbar.single {
+  grid-template-columns: 1fr;
+}
+
 .field {
   display: grid;
   gap: 7px;

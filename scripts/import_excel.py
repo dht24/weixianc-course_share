@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_EXCEL = Path(r"C:\Users\dht\Downloads\选课分享.xlsx")
+DEFAULT_EXCEL = Path(r"C:\Users\dht\Downloads\TIC2选课.xlsx")
 OUT = ROOT / "src" / "data" / "seed-data.ts"
 SQL_OUT = ROOT / "supabase" / "seed.sql"
 
@@ -68,7 +68,55 @@ def score(text: str) -> int:
     return 4
 
 
-def read_excel(path: Path) -> dict[str, dict[str, list[str]]]:
+COURSE_NAME_MAP = {
+    "24770031 (2A)": "科技创新与挑战2A",
+    "24770041 (2B)": "科技创新与挑战2B",
+    "24770051 (2C)": "科技创新与挑战2C",
+    "24770061 (2D)": "科技创新与挑战2D",
+    "2C": "科技创新与挑战2C",
+}
+
+
+def normalize_course_name(value: str) -> str:
+    return COURSE_NAME_MAP.get(value, value)
+
+
+def read_tic2_excel(path: Path) -> dict[str, dict[str, list[str]]]:
+    wb = load_workbook(path, data_only=True)
+    ws = wb.active
+    courses: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    current_course = ""
+    current_teacher = ""
+
+    for row in range(2, ws.max_row + 1):
+        raw_course = clean(ws.cell(row, 1).value)
+        teacher = clean(ws.cell(row, 3).value)
+        if raw_course:
+            current_course = normalize_course_name(raw_course)
+        if teacher:
+            current_teacher = teacher
+            courses[current_course][current_teacher]
+
+        if not current_course or not current_teacher:
+            continue
+
+        review_values = [clean(ws.cell(row, col).value) for col in range(6, ws.max_column + 1)]
+
+        # The source sheet has a final 2C note placed under the research-direction column.
+        if current_course == "科技创新与挑战2C" and not any(review_values):
+            extra_note = clean(ws.cell(row, 5).value)
+            if row > 1 and not teacher and extra_note:
+                review_values.append(extra_note)
+
+        for review in review_values:
+            if review:
+                courses[current_course][current_teacher].append(review)
+
+    courses.pop("课程号", None)
+    return courses
+
+
+def read_legacy_excel(path: Path) -> dict[str, dict[str, list[str]]]:
     wb = load_workbook(path, data_only=True)
     ws = wb.active
 
@@ -106,6 +154,16 @@ def read_excel(path: Path) -> dict[str, dict[str, list[str]]]:
     return courses
 
 
+def read_excel(path: Path) -> dict[str, dict[str, list[str]]]:
+    wb = load_workbook(path, read_only=True, data_only=True)
+    ws = wb.active
+    header = [clean(cell) for cell in next(ws.iter_rows(min_row=1, max_row=1, values_only=True))]
+    wb.close()
+    if len(header) >= 3 and header[0] == "课程号" and header[2] == "授课教师":
+        return read_tic2_excel(path)
+    return read_legacy_excel(path)
+
+
 def build_seed(raw: dict[str, dict[str, list[str]]]) -> dict[str, Any]:
     courses = []
     teachers_by_name: dict[str, dict[str, str]] = {}
@@ -118,11 +176,11 @@ def build_seed(raw: dict[str, dict[str, list[str]]]) -> dict[str, Any]:
             {
                 "id": course_id,
                 "name": course_name,
-                "category": "培养方案课程",
-                "audience": "四字班 / 五字班",
-                "program": "下学期培养方案",
+                "category": "",
+                "audience": "",
+                "program": "课程概要",
                 "aliases": [],
-                "summary": "由共享表格迁移而来，等待管理员进一步校对。",
+                "summary": "",
             }
         )
 
@@ -185,7 +243,7 @@ def sql_quote(value: Any) -> str:
 
 def write_sql_seed(seed: dict[str, Any]) -> None:
     lines = [
-        "-- Seed data generated from 选课分享.xlsx.",
+        f"-- Seed data generated from {DEFAULT_EXCEL.name}.",
         "-- Execute supabase/schema.sql first, then run this file in Supabase SQL Editor.",
         "begin;",
     ]

@@ -36,10 +36,10 @@ export default async function CoursePage({ params }: Props) {
       <section className="panel">
         <p className="eyebrow">{course.program}</p>
         <h1>{course.name}</h1>
-        <p className="lead">{course.summary}</p>
+        {course.summary ? <p className="lead">{course.summary}</p> : null}
         <div className="badge-row">
-          <span className="badge">{course.category}</span>
-          <span className="badge">{course.audience}</span>
+          {course.category ? <span className="badge">{course.category}</span> : null}
+          {course.audience ? <span className="badge">{course.audience}</span> : null}
           <span className="badge">{stats.teacherCount} 位老师</span>
           <span className="badge">{stats.reviewCount} 条评价</span>
           <span className="badge">
