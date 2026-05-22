@@ -9,9 +9,9 @@ export default async function HomePage() {
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">课程评价、授课体验、资料线索统一整理</p>
-          <h1>科技创新与挑战选课分享。</h1>
+          <h1>为先书院选课分享网站</h1>
           <p className="lead">
-            按 2A、2B、2C、2D 整理课程体验；同学提交的新评价先进入审核队列，通过后再公开展示。
+            这是为先书院选课分享网站，这里是网站介绍。
           </p>
         </div>
         <div className="metric-strip" aria-label="当前数据概览">

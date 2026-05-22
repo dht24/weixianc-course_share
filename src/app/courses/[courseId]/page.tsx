@@ -99,7 +99,7 @@ export default async function CoursePage({ params }: Props) {
         <div className="teacher-heading">
           <div>
             <h2>课程资料</h2>
-            <p className="lead">第一版先收集网盘链接，通过审核后挂到课程页面。</p>
+            <p className="lead">（建设中）计划收集网盘链接，通过审核后展示在课程页面。</p>
           </div>
           <Link className="button secondary" href={`/submit?course=${course.id}#resource`}>
             <Download aria-hidden="true" />

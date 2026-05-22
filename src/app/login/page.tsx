@@ -12,8 +12,8 @@ export default async function LoginPage({ searchParams }: Props) {
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">管理员登录</p>
-          <h1>审核入口只给负责人使用。</h1>
-          <p className="lead">普通同学可以直接提交评价；管理员登录后才能通过、驳回或整理内容。</p>
+          <h1>这是审核入口，只给管理员使用。</h1>
+          <p className="lead">同学可以直接提交评价；由管理员负责通过、驳回或整理内容。</p>
         </div>
       </section>
 

@@ -153,7 +153,7 @@ export function SubmitForm({ data }: Props) {
         <div className="hero-copy">
           <p className="eyebrow">提交入口</p>
           <h1>新增内容先进入审核队列。</h1>
-          <p className="lead">同学只需要按表单提交，公开页面不会被直接改乱；管理员通过后再进入课程详情页。</p>
+          <p className="lead">同学只需要按表单提交，公开页面不会被直接修改；管理员通过后再进入课程详情页。</p>
         </div>
         <div className="metric-strip">
           <div className="metric">

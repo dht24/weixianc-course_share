@@ -57,7 +57,7 @@ export function AdminQueue() {
           <p className="eyebrow">管理员审核</p>
           <h1>公开内容先过一遍质量关。</h1>
           <p className="lead">
-            这里展示浏览器本地待审核队列；接入 Supabase 后，按钮会更新数据库里的审核状态。
+            这里展示浏览器本地待审核队列；按钮会更新数据库里的审核状态。
           </p>
         </div>
         <div className="metric-strip">
