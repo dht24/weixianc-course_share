@@ -77,7 +77,7 @@ export default async function CoursePage({ params }: Props) {
                 {reviews.map((review) => (
                   <div className="review" key={review.id}>
                     <div className="review-meta">
-                      <span>{review.term}</span>
+                      {review.term ? <span>{review.term}</span> : null}
                       <span>工作量：{review.workload}</span>
                       <span>给分：{review.grading}</span>
                       <span>考核：{review.assessment}</span>

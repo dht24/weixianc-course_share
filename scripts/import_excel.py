@@ -10,9 +10,12 @@ from openpyxl import load_workbook
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_EXCEL = Path(r"C:\Users\dht\Downloads\TIC2选课.xlsx")
+LEGACY_EXCEL = Path(r"C:\Users\dht\Downloads\选课分享.xlsx")
+TIC2_EXCEL = Path(r"C:\Users\dht\Downloads\TIC2选课.xlsx")
+DEFAULT_EXCEL_FILES = [LEGACY_EXCEL, TIC2_EXCEL]
 OUT = ROOT / "src" / "data" / "seed-data.ts"
 SQL_OUT = ROOT / "supabase" / "seed.sql"
+UPSERT_SQL_OUT = ROOT / "supabase" / "upsert-seed.sql"
 
 
 def clean(value: Any) -> str:
@@ -75,6 +78,15 @@ COURSE_NAME_MAP = {
     "24770061 (2D)": "科技创新与挑战2D",
     "2C": "科技创新与挑战2C",
 }
+
+OBSOLETE_TIC2_COURSE_NAMES = [
+    "课程号",
+    "24770031 (2A)",
+    "24770041 (2B)",
+    "24770051 (2C)",
+    "24770061 (2D)",
+    "2C",
+]
 
 
 def normalize_course_name(value: str) -> str:
@@ -164,6 +176,18 @@ def read_excel(path: Path) -> dict[str, dict[str, list[str]]]:
     return read_legacy_excel(path)
 
 
+def merge_raw_data(paths: list[Path]) -> dict[str, dict[str, list[str]]]:
+    merged: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    for path in paths:
+        raw = read_excel(path)
+        for course_name, teacher_map in raw.items():
+            if course_name in OBSOLETE_TIC2_COURSE_NAMES:
+                continue
+            for teacher_name, reviews in teacher_map.items():
+                merged[course_name][teacher_name].extend(reviews)
+    return merged
+
+
 def build_seed(raw: dict[str, dict[str, list[str]]]) -> dict[str, Any]:
     courses = []
     teachers_by_name: dict[str, dict[str, str]] = {}
@@ -176,8 +200,8 @@ def build_seed(raw: dict[str, dict[str, list[str]]]) -> dict[str, Any]:
             {
                 "id": course_id,
                 "name": course_name,
-                "category": "",
-                "audience": "",
+                "category": "" if course_name.startswith("科技创新与挑战2") else "培养方案课程",
+                "audience": "" if course_name.startswith("科技创新与挑战2") else "四字班 / 五字班",
                 "program": "课程概要",
                 "aliases": [],
                 "summary": "",
@@ -210,7 +234,7 @@ def build_seed(raw: dict[str, dict[str, list[str]]]) -> dict[str, Any]:
                     {
                         "id": f"review-{len(reviews) + 1:04d}",
                         "offeringId": offering_id,
-                        "term": "历史共享表",
+                        "term": "",
                         "workload": detect_workload(review_text),
                         "grading": detect_grading(review_text),
                         "assessment": detect_assessment(review_text),
@@ -241,9 +265,19 @@ def sql_quote(value: Any) -> str:
     return f"'{text}'"
 
 
-def write_sql_seed(seed: dict[str, Any]) -> None:
+def insert_statement(table: str, columns: list[str], values: list[Any], conflict: str | None = None) -> str:
+    base = f"insert into {table} ({', '.join(columns)}) values ({', '.join(sql_quote(value) for value in values)})"
+    if conflict:
+        update_columns = [column for column in columns if column not in conflict.split(", ")]
+        assignments = ", ".join(f"{column} = excluded.{column}" for column in update_columns)
+        return f"{base} on conflict ({conflict}) do update set {assignments};"
+    return f"{base};"
+
+
+def write_sql_files(seed: dict[str, Any]) -> None:
     lines = [
-        f"-- Seed data generated from {DEFAULT_EXCEL.name}.",
+        "-- Destructive seed generated from 选课分享.xlsx and TIC2选课.xlsx.",
+        "-- This file deletes existing course data before importing.",
         "-- Execute supabase/schema.sql first, then run this file in Supabase SQL Editor.",
         "begin;",
     ]
@@ -252,42 +286,81 @@ def write_sql_seed(seed: dict[str, Any]) -> None:
         lines.append(f"delete from {table};")
 
     for course in seed["courses"]:
-        lines.append(
-            "insert into courses (id, name, category, audience, program, aliases, summary) values "
-            f"({sql_quote(course['id'])}, {sql_quote(course['name'])}, {sql_quote(course['category'])}, "
-            f"{sql_quote(course['audience'])}, {sql_quote(course['program'])}, {sql_quote(course['aliases'])}, "
-            f"{sql_quote(course['summary'])});"
-        )
+        lines.append(insert_statement(
+            "courses",
+            ["id", "name", "category", "audience", "program", "aliases", "summary"],
+            [course["id"], course["name"], course["category"], course["audience"], course["program"], course["aliases"], course["summary"]],
+        ))
 
     for teacher in seed["teachers"]:
-        lines.append(
-            "insert into teachers (id, name, department, note) values "
-            f"({sql_quote(teacher['id'])}, {sql_quote(teacher['name'])}, "
-            f"{sql_quote(teacher['department'])}, {sql_quote(teacher['note'])});"
-        )
+        lines.append(insert_statement(
+            "teachers",
+            ["id", "name", "department", "note"],
+            [teacher["id"], teacher["name"], teacher["department"], teacher["note"]],
+        ))
 
     for offering in seed["offerings"]:
-        lines.append(
-            "insert into course_offerings (id, course_id, teacher_id, term, status) values "
-            f"({sql_quote(offering['id'])}, {sql_quote(offering['courseId'])}, "
-            f"{sql_quote(offering['teacherId'])}, {sql_quote(offering['term'])}, {sql_quote(offering['status'])});"
-        )
+        lines.append(insert_statement(
+            "course_offerings",
+            ["id", "course_id", "teacher_id", "term", "status"],
+            [offering["id"], offering["courseId"], offering["teacherId"], offering["term"], offering["status"]],
+        ))
 
     for review in seed["reviews"]:
-        lines.append(
-            "insert into reviews (id, offering_id, term, workload, grading, assessment, rating, content, tags, contact, status, created_at) values "
-            f"({sql_quote(review['id'])}, {sql_quote(review['offeringId'])}, {sql_quote(review['term'])}, "
-            f"{sql_quote(review['workload'])}, {sql_quote(review['grading'])}, {sql_quote(review['assessment'])}, "
-            f"{review['rating']}, {sql_quote(review['content'])}, {sql_quote(review['tags'])}, "
-            f"{sql_quote(review['contact'])}, {sql_quote(review['status'])}, {sql_quote(review['createdAt'])});"
-        )
+        lines.append(insert_statement(
+            "reviews",
+            ["id", "offering_id", "term", "workload", "grading", "assessment", "rating", "content", "tags", "contact", "status", "created_at"],
+            [review["id"], review["offeringId"], review["term"], review["workload"], review["grading"], review["assessment"], review["rating"], review["content"], review["tags"], review["contact"], review["status"], review["createdAt"]],
+        ))
 
     lines.append("commit;")
     SQL_OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    upsert_lines = [
+        "-- Non-destructive upsert seed generated from 选课分享.xlsx and TIC2选课.xlsx.",
+        "-- This file adds or updates imported courses without deleting existing rows.",
+        "-- It only removes obsolete TIC2 course rows created by earlier imports.",
+        "begin;",
+    ]
+    upsert_lines.append(
+        "delete from courses where name in ("
+        + ", ".join(sql_quote(name) for name in OBSOLETE_TIC2_COURSE_NAMES)
+        + ");"
+    )
+    for course in seed["courses"]:
+        upsert_lines.append(insert_statement(
+            "courses",
+            ["id", "name", "category", "audience", "program", "aliases", "summary"],
+            [course["id"], course["name"], course["category"], course["audience"], course["program"], course["aliases"], course["summary"]],
+            "id",
+        ))
+    for teacher in seed["teachers"]:
+        upsert_lines.append(insert_statement(
+            "teachers",
+            ["id", "name", "department", "note"],
+            [teacher["id"], teacher["name"], teacher["department"], teacher["note"]],
+            "id",
+        ))
+    for offering in seed["offerings"]:
+        upsert_lines.append(insert_statement(
+            "course_offerings",
+            ["id", "course_id", "teacher_id", "term", "status"],
+            [offering["id"], offering["courseId"], offering["teacherId"], offering["term"], offering["status"]],
+            "id",
+        ))
+    for review in seed["reviews"]:
+        upsert_lines.append(insert_statement(
+            "reviews",
+            ["id", "offering_id", "term", "workload", "grading", "assessment", "rating", "content", "tags", "contact", "status", "created_at"],
+            [review["id"], review["offeringId"], review["term"], review["workload"], review["grading"], review["assessment"], review["rating"], review["content"], review["tags"], review["contact"], review["status"], review["createdAt"]],
+            "id",
+        ))
+    upsert_lines.append("commit;")
+    UPSERT_SQL_OUT.write_text("\n".join(upsert_lines) + "\n", encoding="utf-8")
+
 
 def main() -> None:
-    raw = read_excel(DEFAULT_EXCEL)
+    raw = merge_raw_data(DEFAULT_EXCEL_FILES)
     seed = build_seed(raw)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     body = json.dumps(seed, ensure_ascii=False, indent=2)
@@ -296,7 +369,7 @@ def main() -> None:
         f"export const seedData = {body} satisfies SeedData;\n",
         encoding="utf-8",
     )
-    write_sql_seed(seed)
+    write_sql_files(seed)
     print(
         f"Imported {len(seed['courses'])} courses, "
         f"{len(seed['teachers'])} teachers, {len(seed['reviews'])} reviews."
