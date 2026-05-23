@@ -25,13 +25,7 @@ export function SubmitForm({ data }: Props) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [term, setTerm] = useState("2025 秋");
-  const [workload, setWorkload] = useState("中");
-  const [grading, setGrading] = useState("不确定");
-  const [assessment, setAssessment] = useState("混合");
-  const [rating, setRating] = useState(4);
   const [content, setContent] = useState("");
-  const [contact, setContact] = useState("");
 
   const [resourceTitle, setResourceTitle] = useState("");
   const [resourceType, setResourceType] = useState("网盘资料");
@@ -57,14 +51,14 @@ export function SubmitForm({ data }: Props) {
     const review: Review = {
       id: `pending-review-${Date.now()}`,
       offeringId: selectedOffering.id,
-      term,
-      workload,
-      grading,
-      assessment,
-      rating,
+      term: "",
+      workload: "不确定",
+      grading: "不确定",
+      assessment: "不确定",
+      rating: 4,
       content: content.trim(),
       tags: [],
-      contact: contact.trim(),
+      contact: "",
       status: "pending",
       createdAt: today,
     };
@@ -95,7 +89,6 @@ export function SubmitForm({ data }: Props) {
     }
 
     setContent("");
-    setContact("");
     setSubmitted("评价已提交，等待管理员审核。");
     setIsSubmitting(false);
   }
@@ -162,7 +155,7 @@ export function SubmitForm({ data }: Props) {
           </div>
           <div className="metric">
             <strong>2</strong>
-            <span>填写体验或资料</span>
+            <span>填写文字评价或资料</span>
           </div>
           <div className="metric">
             <strong>3</strong>
@@ -212,55 +205,13 @@ export function SubmitForm({ data }: Props) {
               ))}
             </select>
           </div>
-          <div className="field">
-            <label htmlFor="term">上课学期</label>
-            <input className="input" id="term" onChange={(event) => setTerm(event.target.value)} value={term} />
-          </div>
-          <div className="field">
-            <label htmlFor="workload">工作量</label>
-            <select className="select" id="workload" onChange={(event) => setWorkload(event.target.value)} value={workload}>
-              {["轻", "中", "重", "不确定"].map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="grading">给分情况</label>
-            <select className="select" id="grading" onChange={(event) => setGrading(event.target.value)} value={grading}>
-              {["偏好", "正常", "偏严", "不确定"].map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="assessment">考核方式</label>
-            <select className="select" id="assessment" onChange={(event) => setAssessment(event.target.value)} value={assessment}>
-              {["考试", "论文", "展示", "作业", "混合", "不确定"].map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="rating">推荐指数</label>
-            <select className="select" id="rating" onChange={(event) => setRating(Number(event.target.value))} value={rating}>
-              {[5, 4, 3, 2, 1].map((item) => (
-                <option key={item} value={item}>
-                  {item} 分
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="contact">联系方式（选填）</label>
-            <input className="input" id="contact" onChange={(event) => setContact(event.target.value)} value={contact} />
-          </div>
           <div className="field wide">
             <label htmlFor="content">课程评价</label>
             <textarea
               className="textarea"
               id="content"
               onChange={(event) => setContent(event.target.value)}
-              placeholder="建议写清事实和个人感受，例如考核方式、任务量、给分体验、适合什么样的同学。"
+              placeholder="写下你对这门课和这位老师的真实体验。可以包含课堂风格、收获、适合什么样的同学等。"
               required
               value={content}
             />

@@ -4,8 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 
 type PendingReview = {
   id: string;
-  term: string;
-  rating: number;
   content: string;
   course_offerings: {
     courses: { name: string } | null;
@@ -39,7 +37,7 @@ export async function AdminSupabaseQueue() {
   const [reviewsResult, resourcesResult] = await Promise.all([
     supabase
       .from("reviews")
-      .select("id, term, rating, content, course_offerings(courses(name), teachers(name))")
+      .select("id, content, course_offerings(courses(name), teachers(name))")
       .eq("status", "pending")
       .order("created_at", { ascending: false }),
     supabase
@@ -84,8 +82,6 @@ export async function AdminSupabaseQueue() {
               <div className="badge-row">
                 <span className="badge">{review.course_offerings?.courses?.name ?? "未知课程"}</span>
                 <span className="badge">{review.course_offerings?.teachers?.name ?? "未知老师"}</span>
-                <span className="badge">{review.term}</span>
-                <span className="badge">{review.rating}/5</span>
               </div>
               <p style={{ lineHeight: 1.8, marginTop: 12, whiteSpace: "pre-wrap" }}>{review.content}</p>
               <div className="admin-actions">

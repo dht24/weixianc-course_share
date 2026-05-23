@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Download, MessageSquarePlus, Star } from "lucide-react";
+import { ArrowLeft, Download, MessageSquarePlus } from "lucide-react";
 import {
   getCourse,
   getCourseOfferings,
@@ -38,14 +38,8 @@ export default async function CoursePage({ params }: Props) {
         <h1>{course.name}</h1>
         {course.summary ? <p className="lead">{course.summary}</p> : null}
         <div className="badge-row">
-          {course.category ? <span className="badge">{course.category}</span> : null}
-          {course.audience ? <span className="badge">{course.audience}</span> : null}
           <span className="badge">{stats.teacherCount} 位老师</span>
           <span className="badge">{stats.reviewCount} 条评价</span>
-          <span className="badge">
-            <Star aria-hidden="true" />
-            {stats.averageRating ? stats.averageRating.toFixed(1) : "暂无"} 分
-          </span>
         </div>
       </section>
 
@@ -53,9 +47,6 @@ export default async function CoursePage({ params }: Props) {
         {offerings.map((offering) => {
           const teacher = getTeacher(data, offering.teacherId);
           const reviews = getPublishedReviews(data, offering.id);
-          const average = reviews.length
-            ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-            : 0;
 
           return (
             <article className="teacher-block" key={offering.id}>
@@ -64,8 +55,6 @@ export default async function CoursePage({ params }: Props) {
                   <h2>{teacher?.name ?? "待补充老师"}</h2>
                   <div className="badge-row">
                     <span className="badge">{reviews.length} 条评价</span>
-                    <span className="badge">{average ? average.toFixed(1) : "暂无"} 分</span>
-                    <span className="badge">开课学期：{offering.term}</span>
                   </div>
                 </div>
                 <Link className="button secondary" href={`/submit?course=${course.id}&offering=${offering.id}`}>
@@ -76,13 +65,6 @@ export default async function CoursePage({ params }: Props) {
               <div className="review-list">
                 {reviews.map((review) => (
                   <div className="review" key={review.id}>
-                    <div className="review-meta">
-                      {review.term ? <span>{review.term}</span> : null}
-                      <span>工作量：{review.workload}</span>
-                      <span>给分：{review.grading}</span>
-                      <span>考核：{review.assessment}</span>
-                      <span>推荐：{review.rating}/5</span>
-                    </div>
                     <p>{review.content}</p>
                   </div>
                 ))}

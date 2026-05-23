@@ -2,7 +2,7 @@
 
 import { useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
-import { GraduationCap, Search, Star, UserRound } from "lucide-react";
+import { GraduationCap, Search, UserRound } from "lucide-react";
 import { getCourseOfferings, getCourseStats, getTeacher, searchCourses } from "@/lib/course-utils";
 import type { SeedData } from "@/lib/types";
 
@@ -15,7 +15,7 @@ export function CourseBrowser({ data }: Props) {
   const deferredQuery = useDeferredValue(query);
 
   const courses = useMemo(
-    () => searchCourses(data, deferredQuery, "全部", "全部"),
+    () => searchCourses(data, deferredQuery),
     [data, deferredQuery],
   );
 
@@ -63,10 +63,6 @@ export function CourseBrowser({ data }: Props) {
                 <span className="badge">
                   <GraduationCap aria-hidden="true" />
                   {stats.reviewCount} 条评价
-                </span>
-                <span className="badge">
-                  <Star aria-hidden="true" />
-                  {stats.averageRating ? stats.averageRating.toFixed(1) : "暂无"} 分
                 </span>
               </div>
             </Link>

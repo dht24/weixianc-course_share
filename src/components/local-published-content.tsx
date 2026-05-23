@@ -37,10 +37,6 @@ export function LocalPublishedContent({ courseId }: Props) {
               <div className="review" key={review.id}>
                 <div className="review-meta">
                   <span>{teacher?.name ?? "未知老师"}</span>
-                  <span>{review.term}</span>
-                  <span>工作量：{review.workload}</span>
-                  <span>给分：{review.grading}</span>
-                  <span>推荐：{review.rating}/5</span>
                 </div>
                 <p>{review.content}</p>
               </div>

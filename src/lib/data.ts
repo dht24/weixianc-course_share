@@ -30,19 +30,14 @@ export function getPublishedResources(courseId: string): Resource[] {
 export function getCourseStats(courseId: string) {
   const offerings = getCourseOfferings(courseId);
   const reviews = offerings.flatMap((offering) => getPublishedReviews(offering.id));
-  const ratings = reviews.map((review) => review.rating).filter(Boolean);
-  const averageRating = ratings.length
-    ? ratings.reduce((total, rating) => total + rating, 0) / ratings.length
-    : 0;
 
   return {
     teacherCount: offerings.length,
     reviewCount: reviews.length,
-    averageRating,
   };
 }
 
-export function searchCourses(query: string, audience: string, category: string) {
+export function searchCourses(query: string) {
   const needle = query.trim().toLowerCase();
   return data.courses.filter((course) => {
     const offerings = getCourseOfferings(course.id);
@@ -50,9 +45,6 @@ export function searchCourses(query: string, audience: string, category: string)
     const haystack = [course.name, course.category, course.audience, course.program, ...course.aliases, ...teachers]
       .join(" ")
       .toLowerCase();
-    const matchesQuery = !needle || haystack.includes(needle);
-    const matchesAudience = audience === "全部" || course.audience.includes(audience);
-    const matchesCategory = category === "全部" || course.category === category;
-    return matchesQuery && matchesAudience && matchesCategory;
+    return !needle || haystack.includes(needle);
   });
 }

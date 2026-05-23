@@ -88,8 +88,6 @@ export function AdminQueue() {
                 <div className="badge-row">
                   <span className="badge">{course?.name ?? "未知课程"}</span>
                   <span className="badge">{teacher?.name ?? "未知老师"}</span>
-                  <span className="badge">{review.term}</span>
-                  <span className="badge">{review.rating}/5</span>
                 </div>
                 <p style={{ lineHeight: 1.8, marginTop: 12, whiteSpace: "pre-wrap" }}>{review.content}</p>
                 <div className="admin-actions">
