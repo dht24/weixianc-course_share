@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { AdminCourseManager } from "@/components/admin-course-manager";
 import { AdminQueue } from "@/components/admin-queue";
 import { AdminSupabaseQueue } from "@/components/admin-supabase-queue";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -47,6 +48,7 @@ on conflict (user_id) do update set role = 'admin';`}</pre>
       <div className="page" style={{ paddingBottom: 0 }}>
         <SignOutButton />
       </div>
+      <AdminCourseManager />
       <AdminSupabaseQueue />
     </>
   );

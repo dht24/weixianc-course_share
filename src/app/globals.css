@@ -232,6 +232,10 @@ h1 {
   resize: vertical;
 }
 
+.textarea.compact {
+  min-height: 92px;
+}
+
 .input:focus,
 .select:focus,
 .textarea:focus {
@@ -417,6 +421,47 @@ h1 {
   margin-top: 14px;
 }
 
+.management-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.management-grid h3,
+.section h3 {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.management-grid h3 svg,
+.section h3 svg {
+  height: 19px;
+  width: 19px;
+}
+
+.compact-list {
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.danger-form {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.danger-form label {
+  align-items: center;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 13px;
+  gap: 6px;
+}
+
 .empty {
   border: 1px dashed #bdb39e;
   color: var(--muted);
@@ -448,6 +493,7 @@ h1 {
 
   .hero,
   .toolbar,
+  .management-grid,
   .form-grid {
     grid-template-columns: 1fr;
   }
